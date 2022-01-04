@@ -12,6 +12,7 @@ variable "topic" {
 
 locals {
   selected_content_path = "content/${var.topic}/"
+  html_articles_path    = "${local.selected_content_path}articles/html/"
   file_endings          = toset(["", "/", ".html"])
 }
 
@@ -26,11 +27,11 @@ resource "aws_s3_bucket_object" "index" {
 }
 
 resource "aws_s3_bucket_object" "articles" {
-  for_each = { for product in setproduct(fileset(path.module, "${local.selected_content_path}articles/html/*.html"), local.file_endings) : "${var.topic}/${split(".", split("/", product[0])[4])[0]}${product[1]}" => product[0] }
+  for_each = { for product in setproduct(fileset(local.html_articles_path, "*.html"), local.file_endings) : "${var.topic}/${split(".", product[0])[0]}${product[1]}" => product[0] }
 
   bucket       = var.bucket
   key          = each.key
   content_type = "text/html"
 
-  content = file(each.value)
+  content = file("${local.html_articles_path}${each.value}")
 }
