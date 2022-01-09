@@ -2,6 +2,7 @@ import sys
 import jinja2
 import os
 import markdown
+import xml
 
 topic = sys.argv[1]
 
@@ -14,22 +15,15 @@ articles_filenames = sorted([
     for filename in os.listdir(article_md_dir)
 ])
 
-index_body = f'<h1>{topic}</h1>\n<ul>\n' + ''.join(
-    [f'<li><a href=\"{topic}/{name}.html\">{name}</a></li>\n' for name in articles_filenames]
-) + '</ul>'
-
 with open('html_template.jinja', 'r') as input_file:
     template_str = input_file.read()
 
 template_j2 = jinja2.Template(template_str)
 
-index_html = template_j2.render(title=topic, body=index_body)
-
-with open(f'{content_dir}index.html', 'w', encoding='utf-8') as output_file:
-    output_file.write(index_html)
-
 if not os.path.isdir(article_html_dir):
     os.mkdir(article_html_dir)
+
+articles_info = {}
 
 for name in articles_filenames:
 
@@ -40,5 +34,19 @@ for name in articles_filenames:
 
     html = template_j2.render(title=name, body=body)
 
+    root = xml.etree.ElementTree.fromstring(html)
+
+    articles_info[name] = root.find('body/h1').text
+
     with open(f'{article_html_dir}{name}.html', 'w', encoding='utf-8', errors='xmlcharrefreplace') as output_file:
         output_file.write(html)
+
+index_body = f'<h1>{topic}</h1>\n<ul>\n' + ''.join(
+    [f'<li><a href=\"{topic}/{filename}.html\">{articles_info[filename]}</a></li>\n'
+     for filename in articles_info.keys()]
+) + '</ul>'
+
+index_html = template_j2.render(title=topic, body=index_body)
+
+with open(f'{content_dir}index.html', 'w', encoding='utf-8') as output_file:
+    output_file.write(index_html)
