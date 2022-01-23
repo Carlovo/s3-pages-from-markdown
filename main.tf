@@ -11,8 +11,8 @@ variable "topic" {
 }
 
 locals {
-  selected_content_path = "content/${var.topic}/"
-  html_articles_path    = "${local.selected_content_path}articles/html/"
+  selected_content_path = "content/product/${var.topic}/"
+  html_articles_path    = "${local.selected_content_path}${var.topic}/"
   file_endings          = toset(["", "/", ".html"])
 }
 
