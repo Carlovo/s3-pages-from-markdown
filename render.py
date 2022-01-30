@@ -1,6 +1,7 @@
 import sys
 import jinja2
 import os
+import shutil
 import markdown
 import xml
 
@@ -11,6 +12,7 @@ content_dir = 'content/'
 source_topic_dir = f'{content_dir}source/{topic}/'
 article_md_dir = source_topic_dir + 'articles/'
 footer_file = f'{source_topic_dir}appendices/footer.html'
+js_app_file = f'{source_topic_dir}appendices/main.js'
 
 product_dir = content_dir + 'product/'
 product_topic_dir = product_dir + topic + '/'
@@ -43,6 +45,12 @@ if os.path.isfile(footer_file):
 else:
     footer_html = ''
 
+if os.path.isfile(js_app_file):
+    shutil.copyfile(js_app_file, article_html_dir + 'main.js')
+    js_ref = f'<script type="module" src="./main.js"></script>'
+else:
+    js_ref = ''
+
 for name in articles_filenames:
 
     with open(f'{article_md_dir}{name}.md', 'r', encoding='utf-8') as input_file:
@@ -56,13 +64,17 @@ for name in articles_filenames:
 
     articles_info[name] = root.find('body/h1').text
 
-    html_pretty = template_j2.render(title=articles_info[name], body=body)
+    html_pretty = template_j2.render(
+        title=articles_info[name],
+        body=body,
+        script=js_ref
+    )
 
     with open(f'{article_html_dir}{name}.html', 'w', encoding='utf-8', errors='xmlcharrefreplace') as output_file:
         output_file.write(html_pretty)
 
 index_body = f'<h1>{topic}</h1>\n<ul>\n' + ''.join(
-    [f'<li><a href=\"{topic}/{filename}.html\">{articles_info[filename]}</a></li>\n'
+    [f'<li><a href=\"/{topic}/{filename}.html\">{articles_info[filename]}</a></li>\n'
      for filename in articles_info.keys()]
 ) + '</ul>'
 

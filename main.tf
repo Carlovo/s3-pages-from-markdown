@@ -13,6 +13,7 @@ variable "topic" {
 locals {
   selected_content_path = "content/product/${var.topic}/"
   html_articles_path    = "${local.selected_content_path}${var.topic}/"
+  js_app_path           = "${local.html_articles_path}main.js"
   file_endings          = toset(["", "/", ".html"])
 }
 
@@ -24,6 +25,16 @@ resource "aws_s3_bucket_object" "index" {
   content_type = "text/html"
 
   content = file("${local.selected_content_path}index.html")
+}
+
+resource "aws_s3_bucket_object" "script" {
+  count = fileexists(local.js_app_path) ? 1 : 0
+
+  bucket       = var.bucket
+  key          = "${var.topic}/main.js"
+  content_type = "text/javascript"
+
+  content = file(local.js_app_path)
 }
 
 resource "aws_s3_bucket_object" "articles" {
