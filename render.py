@@ -6,16 +6,17 @@ import markdown
 import xml
 
 topic = sys.argv[1]
+bucket = sys.argv[2]
 
 content_dir = 'content/'
 
 source_topic_dir = f'{content_dir}source/{topic}/'
 article_md_dir = source_topic_dir + 'articles/'
-footer_file = f'{source_topic_dir}appendices/footer.html'
-js_app_file = f'{source_topic_dir}appendices/main.js'
+footer_file = source_topic_dir + 'appendices/footer.html'
+js_app_file = source_topic_dir + 'appendices/main.js'
 
 product_dir = content_dir + 'product/'
-product_topic_dir = product_dir + topic + '/'
+product_topic_dir = f'{product_dir}{topic}-{bucket}/'
 article_html_dir = product_topic_dir + topic + '/'
 
 articles_filenames = sorted([
