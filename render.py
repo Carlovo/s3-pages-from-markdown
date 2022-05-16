@@ -57,7 +57,8 @@ for name in articles_filenames:
     with open(f'{article_md_dir}{name}.md', 'r', encoding='utf-8') as input_file:
         text = input_file.read()
 
-    body = markdown.markdown(text) + footer_html
+    md = markdown.Markdown(extensions=['toc'])
+    body = md.convert(text) + footer_html
 
     html_raw = template_j2.render(title=name, body=body)
 
