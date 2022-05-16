@@ -14,35 +14,33 @@ locals {
   selected_content_path = "content/product/${var.topic}-${var.bucket}/"
   html_articles_path    = "${local.selected_content_path}${var.topic}/"
   js_app_path           = "${local.html_articles_path}main.js"
-  file_endings          = toset(["", "/", ".html"])
 }
 
-resource "aws_s3_bucket_object" "index" {
-  for_each = local.file_endings
+module "index" {
+  source = "./tf_modules/s3_webpage"
 
-  bucket       = var.bucket
-  key          = "${var.topic}${each.key}"
-  content_type = "text/html"
-
-  content = file("${local.selected_content_path}index.html")
+  bucket_name   = var.bucket
+  resource_name = "${var.topic}.html"
+  content_path  = "${local.selected_content_path}index.html"
 }
 
-resource "aws_s3_bucket_object" "script" {
+module "script" {
   count = fileexists(local.js_app_path) ? 1 : 0
 
-  bucket       = var.bucket
-  key          = "${var.topic}/main.js"
-  content_type = "text/javascript"
+  source = "./tf_modules/s3_webpage"
 
-  content = file(local.js_app_path)
+  bucket_name   = var.bucket
+  resource_name = "${var.topic}/main.js"
+  content_type  = "text/javascript"
+  content_path  = local.js_app_path
 }
 
-resource "aws_s3_bucket_object" "articles" {
-  for_each = { for product in setproduct(fileset(local.html_articles_path, "*.html"), local.file_endings) : "${var.topic}/${split(".", product[0])[0]}${product[1]}" => product[0] }
+module "articles" {
+  for_each = fileset(local.html_articles_path, "*.html")
 
-  bucket       = var.bucket
-  key          = each.key
-  content_type = "text/html"
+  source = "./tf_modules/s3_webpage"
 
-  content = file("${local.html_articles_path}${each.value}")
+  bucket_name   = var.bucket
+  resource_name = "${var.topic}/${each.key}"
+  content_path  = "${local.html_articles_path}${each.key}"
 }
