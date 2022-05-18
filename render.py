@@ -32,11 +32,11 @@ template_j2 = jinja2.Template(template_str)
 if not os.path.isdir(product_dir):
     os.mkdir(product_dir)
 
-if not os.path.isdir(product_topic_dir):
-    os.mkdir(product_topic_dir)
+if os.path.isdir(product_topic_dir):
+    shutil.rmtree(product_topic_dir)
 
-if not os.path.isdir(article_html_dir):
-    os.mkdir(article_html_dir)
+os.mkdir(product_topic_dir)
+os.mkdir(article_html_dir)
 
 articles_info = {}
 
@@ -82,5 +82,5 @@ index_body = f'<h1>{topic}</h1>\n<ul>\n' + ''.join(
 
 index_html = template_j2.render(title=topic, body=index_body)
 
-with open(f'{product_topic_dir}index.html', 'w', encoding='utf-8') as output_file:
+with open(f'{product_topic_dir}{topic}.html', 'w', encoding='utf-8') as output_file:
     output_file.write(index_html)

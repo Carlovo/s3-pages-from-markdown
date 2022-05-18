@@ -5,13 +5,7 @@ variable "bucket_name" {
 
 variable "resource_name" {
   type        = string
-  description = "Name of the webpage should have in the S3 bucket / on the web"
-}
-
-variable "content_type" {
-  type        = string
-  default     = "text/html"
-  description = "MIME type the browser receives when querying for this page"
+  description = "The name the webpage should have in the S3 bucket / on the web"
 }
 
 variable "content_path" {
