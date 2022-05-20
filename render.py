@@ -8,16 +8,16 @@ import xml
 topic = sys.argv[1]
 bucket = sys.argv[2]
 
-content_dir = 'content/'
+content_dir = 'content'
 
-source_topic_dir = f'{content_dir}source/{topic}/'
-article_md_dir = source_topic_dir + 'articles/'
-footer_file = source_topic_dir + 'appendices/footer.html'
-js_app_file = source_topic_dir + 'appendices/main.js'
+source_topic_dir = f'{content_dir}/source/{topic}'
+article_md_dir = source_topic_dir + '/articles'
+footer_file = source_topic_dir + '/appendices/footer.html'
+js_app_file = source_topic_dir + '/appendices/main.js'
 
-product_dir = content_dir + 'product/'
-product_topic_dir = f'{product_dir}{topic}-{bucket}/'
-article_html_dir = product_topic_dir + topic + '/'
+product_dir = content_dir + '/product'
+product_topic_dir = f'{product_dir}/{topic}-{bucket}/'
+article_html_dir = product_topic_dir + '/' + topic + '/'
 
 articles_filenames = sorted([
     filename.split('.')[0]
@@ -47,14 +47,14 @@ else:
     footer_html = ''
 
 if os.path.isfile(js_app_file):
-    shutil.copyfile(js_app_file, article_html_dir + 'main.js')
+    shutil.copyfile(js_app_file, article_html_dir + '/main.js')
     js_ref = f'<script type="module" src="./main.js"></script>'
 else:
     js_ref = ''
 
 for name in articles_filenames:
 
-    with open(f'{article_md_dir}{name}.md', 'r', encoding='utf-8') as input_file:
+    with open(f'{article_md_dir}/{name}.md', 'r', encoding='utf-8') as input_file:
         text = input_file.read()
 
     md = markdown.Markdown(extensions=['toc'])
@@ -72,7 +72,7 @@ for name in articles_filenames:
         script=js_ref
     )
 
-    with open(f'{article_html_dir}{name}.html', 'w', encoding='utf-8', errors='xmlcharrefreplace') as output_file:
+    with open(f'{article_html_dir}/{name}.html', 'w', encoding='utf-8', errors='xmlcharrefreplace') as output_file:
         output_file.write(html_pretty)
 
 index_body = f'<h1>{topic}</h1>\n<ul>\n' + ''.join(
@@ -82,5 +82,5 @@ index_body = f'<h1>{topic}</h1>\n<ul>\n' + ''.join(
 
 index_html = template_j2.render(title=topic, body=index_body)
 
-with open(f'{product_topic_dir}{topic}.html', 'w', encoding='utf-8') as output_file:
+with open(f'{product_topic_dir}/{topic}.html', 'w', encoding='utf-8') as output_file:
     output_file.write(index_html)
