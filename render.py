@@ -46,17 +46,21 @@ else:
 
 def convert_snake_case_to_title_case(text: str) -> str:
     return ' '.join(
-        [substring.capitalize() for substring in text.split("_")]
+        [substring.capitalize() for substring in text.split('_')]
     )
 
 
-def create_html_link_list(path: str, text: str) -> str:
-    return f'<li><a href=\"{path}\">{text}</a></li>'
+def create_html_link(path: str, text: str) -> str:
+    return f'<a href=\"{path}\">{text}</a>'
+
+
+def create_html_link_list_item(path: str, text: str) -> str:
+    return f'<li>{create_html_link(path, text)}</li>'
 
 
 def create_html_link_list_from_dict(files_to_titles: dict) -> str:
     return '<ul>\n' + '\n'.join(
-        [create_html_link_list(
+        [create_html_link_list_item(
             file_to_title,
             files_to_titles[file_to_title]
         )
@@ -64,11 +68,32 @@ def create_html_link_list_from_dict(files_to_titles: dict) -> str:
     ) + '\n</ul>\n'
 
 
+def create_html_breadcrumb_div(content: str) -> str:
+    return '<div>\n<p>' + content + '</p>\n</div>\n'
+
+
 for dirpath, dirnames, filenames in os.walk(source_topic_dir + '/articles'):
     articles_info = {}
-    online_path = '/'.join(dirpath.split('/')[4:])
+    online_partial_path = '/'.join(dirpath.split('/')[4:])
     # last argument is a hacky way to make all paths end the same way: with /
-    article_html_subdir = os.path.join(article_html_dir, online_path, '')
+    online_path = os.path.join(topic, online_partial_path, '')
+    article_html_subdir = os.path.join(
+        article_html_dir, online_partial_path, ''
+    )
+
+    online_dirs = online_path[:-1].split('/')
+
+    breadcrumb_dir_links = [
+        create_html_link(os.path.join('/', *online_dirs[:_i + 1]) + '.html',
+                         convert_snake_case_to_title_case(_online_dir))
+        for _i, _online_dir in enumerate(online_dirs)
+    ]
+
+    breadcrumb_article_primer = ' > '.join(breadcrumb_dir_links) + ' > '
+    breadcrumb_index_primer = ' > '.join(breadcrumb_dir_links[:-1])
+
+    if breadcrumb_index_primer:
+        breadcrumb_index_primer += ' > '
 
     os.mkdir(article_html_subdir)
     filenames.sort()
@@ -86,6 +111,10 @@ for dirpath, dirnames, filenames in os.walk(source_topic_dir + '/articles'):
         root = xml.etree.ElementTree.fromstring(html_raw)
         article_title = root.find('body/h1').text
 
+        body = create_html_breadcrumb_div(
+            breadcrumb_article_primer + article_title
+        ) + body
+
         html_pretty = template_j2.render(
             title=article_title,
             body=body,
@@ -98,18 +127,21 @@ for dirpath, dirnames, filenames in os.walk(source_topic_dir + '/articles'):
             output_file.write(html_pretty)
 
         articles_info[
-            '/' + os.path.join(topic, online_path, html_filename)
+            '/' + os.path.join(online_path, html_filename)
         ] = article_title
 
-    parent_dir = article_html_subdir.split("/")[-2]
+    parent_dir = article_html_subdir.split('/')[-2]
     parent_title = convert_snake_case_to_title_case(parent_dir)
 
-    index_body = f'<h1>{parent_title}</h1>\n'
+    index_body = create_html_breadcrumb_div(
+        breadcrumb_index_primer +
+        convert_snake_case_to_title_case(online_dirs[-1])
+    ) + f'<h1>{parent_title}</h1>\n'
 
     if dirnames:
         dirnames.sort()
         dirnames_info = {
-            f'/{os.path.join(topic, online_path, dirname)}.html': convert_snake_case_to_title_case(dirname)
+            f'/{os.path.join(online_path, dirname)}.html': convert_snake_case_to_title_case(dirname)
             for dirname in dirnames
         }
 
