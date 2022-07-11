@@ -74,17 +74,15 @@ def create_html_breadcrumb_div(content: str) -> str:
 
 for dirpath, dirnames, filenames in os.walk(source_topic_dir + '/articles'):
     articles_info = {}
-    online_partial_path = '/'.join(dirpath.split('/')[4:])
-    # last argument is a hacky way to make all paths end the same way: with /
-    online_path = os.path.join(topic, online_partial_path, '')
-    article_html_subdir = os.path.join(
-        article_html_dir, online_partial_path, ''
-    )
 
-    online_dirs = online_path[:-1].split('/')
+    online_subdirs = dirpath.split('/')[4:]
+    article_html_subdir = os.path.join(article_html_dir, *online_subdirs)
+
+    online_dirs = [topic] + online_subdirs
+    online_path = os.path.join('/', *online_dirs)
 
     breadcrumb_dir_links = [
-        create_html_link(os.path.join('/', *online_dirs[:_i + 1]) + '.html',
+        create_html_link(os.path.join('/', *online_dirs[:_i + 1], 'index.html'),
                          convert_snake_case_to_title_case(_online_dir))
         for _i, _online_dir in enumerate(online_dirs)
     ]
@@ -104,7 +102,7 @@ for dirpath, dirnames, filenames in os.walk(source_topic_dir + '/articles'):
 
         name = filename.split('.')[0]
 
-        md = markdown.Markdown(extensions=['toc'])
+        md = markdown.Markdown(extensions=['toc', 'tables'])
         body = md.convert(text) + footer_html
 
         html_raw = template_j2.render(title=name, body=body)
@@ -127,21 +125,19 @@ for dirpath, dirnames, filenames in os.walk(source_topic_dir + '/articles'):
             output_file.write(html_pretty)
 
         articles_info[
-            '/' + os.path.join(online_path, html_filename)
+            os.path.join(online_path, html_filename)
         ] = article_title
 
-    parent_dir = article_html_subdir.split('/')[-2]
-    parent_title = convert_snake_case_to_title_case(parent_dir)
-
+    index_title = convert_snake_case_to_title_case(online_dirs[-1])
     index_body = create_html_breadcrumb_div(
-        breadcrumb_index_primer +
-        convert_snake_case_to_title_case(online_dirs[-1])
-    ) + f'<h1>{parent_title}</h1>\n'
+        breadcrumb_index_primer + index_title)
+
+    index_body += f'<h1>{index_title}</h1>\n'
 
     if dirnames:
         dirnames.sort()
         dirnames_info = {
-            f'/{os.path.join(online_path, dirname)}.html': convert_snake_case_to_title_case(dirname)
+            os.path.join(online_path, dirname, 'index.html'): convert_snake_case_to_title_case(dirname)
             for dirname in dirnames
         }
 
@@ -153,9 +149,9 @@ for dirpath, dirnames, filenames in os.walk(source_topic_dir + '/articles'):
             create_html_link_list_from_dict(articles_info)
 
     index_html = template_j2.render(
-        title=parent_title,
+        title=index_title,
         body=index_body
     )
 
-    with open(os.path.join(article_html_subdir, '..', f'{parent_dir}.html'), 'w', encoding='utf-8') as output_file:
+    with open(os.path.join(article_html_subdir, 'index.html'), 'w', encoding='utf-8') as output_file:
         output_file.write(index_html)
