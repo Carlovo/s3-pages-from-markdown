@@ -18,6 +18,8 @@ product_dir = content_dir + '/product'
 product_topic_dir = f'{product_dir}/{topic}-{bucket}'
 article_html_dir = product_topic_dir + '/' + topic
 
+md = markdown.Markdown(extensions=['toc', 'tables'])
+
 with open('html_template.jinja', 'r') as input_file:
     template_str = input_file.read()
 
@@ -72,6 +74,8 @@ def create_html_breadcrumb_div(content: str) -> str:
     return '<div>\n<p>' + content + '</p>\n</div>\n'
 
 
+breadcrumbs_info = {}
+
 for dirpath, dirnames, filenames in os.walk(source_topic_dir + '/articles'):
     articles_info = {}
 
@@ -81,10 +85,24 @@ for dirpath, dirnames, filenames in os.walk(source_topic_dir + '/articles'):
     online_dirs = [topic] + online_subdirs
     online_path = os.path.join('/', *online_dirs)
 
+    if 'index.md' in filenames:
+        with open(os.path.join(dirpath, 'index.md'), 'r', encoding='utf-8') as input_file:
+            text = input_file.read()
+
+        body = md.convert(text)
+        index_raw = template_j2.render(body=body)
+        root = xml.etree.ElementTree.fromstring(index_raw)
+
+        index_title = root.find('body/h1').text
+    else:
+        index_title = convert_snake_case_to_title_case(online_dirs[-1])
+
+    breadcrumbs_info[online_path] = index_title
+
     breadcrumb_dir_links = [
         create_html_link(os.path.join('/', *online_dirs[:_i + 1], 'index.html'),
-                         convert_snake_case_to_title_case(_online_dir))
-        for _i, _online_dir in enumerate(online_dirs)
+                         breadcrumbs_info[os.path.join('/', *online_dirs[:_i + 1])])
+        for _i, _ in enumerate(online_dirs)
     ]
 
     breadcrumb_article_primer = ' > '.join(breadcrumb_dir_links) + ' > '
@@ -97,16 +115,18 @@ for dirpath, dirnames, filenames in os.walk(source_topic_dir + '/articles'):
     filenames.sort()
 
     for filename in filenames:
+        if filename == 'index.md':
+            continue
+
         with open(os.path.join(dirpath, filename), 'r', encoding='utf-8') as input_file:
             text = input_file.read()
 
         name = filename.split('.')[0]
 
-        md = markdown.Markdown(extensions=['toc', 'tables'])
         body = md.convert(text) + footer_html
-
-        html_raw = template_j2.render(title=name, body=body)
+        html_raw = template_j2.render(body=body)
         root = xml.etree.ElementTree.fromstring(html_raw)
+
         article_title = root.find('body/h1').text
 
         body = create_html_breadcrumb_div(
@@ -128,7 +148,6 @@ for dirpath, dirnames, filenames in os.walk(source_topic_dir + '/articles'):
             os.path.join(online_path, html_filename)
         ] = article_title
 
-    index_title = convert_snake_case_to_title_case(online_dirs[-1])
     index_body = create_html_breadcrumb_div(
         breadcrumb_index_primer + index_title)
 
