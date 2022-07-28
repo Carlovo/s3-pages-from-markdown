@@ -74,6 +74,28 @@ def create_html_breadcrumb_div(content: str) -> str:
     return '<div>\n<p>' + content + '</p>\n</div>\n'
 
 
+def try_extract_index_title_else_create(dirpath: str) -> str:
+    maybe_index_path = os.path.join(dirpath, 'index.md')
+    if os.path.exists(maybe_index_path):
+        with open(maybe_index_path, 'r', encoding='utf-8') as input_file:
+            text = input_file.read()
+
+        body = md.convert(text)
+        index_raw = template_j2.render(body=body)
+        root = xml.etree.ElementTree.fromstring(index_raw)
+
+        return root.find('body/h1').text
+    else:
+        return convert_snake_case_to_title_case(dirpath.split('/')[-1])
+
+
+def sort_dict_by_value(this_dict: dict) -> dict:
+    return {
+        k: v for k, v in
+        sorted(this_dict.items(), key=lambda item: item[1])
+    }
+
+
 breadcrumbs_info = {}
 
 for dirpath, dirnames, filenames in os.walk(source_topic_dir + '/articles'):
@@ -85,17 +107,7 @@ for dirpath, dirnames, filenames in os.walk(source_topic_dir + '/articles'):
     online_dirs = [topic] + online_subdirs
     online_path = os.path.join('/', *online_dirs)
 
-    if 'index.md' in filenames:
-        with open(os.path.join(dirpath, 'index.md'), 'r', encoding='utf-8') as input_file:
-            text = input_file.read()
-
-        body = md.convert(text)
-        index_raw = template_j2.render(body=body)
-        root = xml.etree.ElementTree.fromstring(index_raw)
-
-        index_title = root.find('body/h1').text
-    else:
-        index_title = convert_snake_case_to_title_case(online_dirs[-1])
+    index_title = try_extract_index_title_else_create(dirpath)
 
     breadcrumbs_info[online_path] = index_title
 
@@ -112,7 +124,6 @@ for dirpath, dirnames, filenames in os.walk(source_topic_dir + '/articles'):
         breadcrumb_index_primer += ' > '
 
     os.mkdir(article_html_subdir)
-    filenames.sort()
 
     for filename in filenames:
         if filename == 'index.md':
@@ -154,18 +165,22 @@ for dirpath, dirnames, filenames in os.walk(source_topic_dir + '/articles'):
     index_body += f'<h1>{index_title}</h1>\n'
 
     if dirnames:
-        dirnames.sort()
         dirnames_info = {
-            os.path.join(online_path, dirname, 'index.html'): convert_snake_case_to_title_case(dirname)
+            os.path.join(online_path, dirname, 'index.html'):
+            try_extract_index_title_else_create(os.path.join(dirpath, dirname))
             for dirname in dirnames
         }
 
+        dirnames_info_sorted = sort_dict_by_value(dirnames_info)
+
         index_body += '<h2>Topics</h2>\n' + \
-            create_html_link_list_from_dict(dirnames_info)
+            create_html_link_list_from_dict(dirnames_info_sorted)
 
     if filenames:
+        articles_info_sorted = sort_dict_by_value(articles_info)
+
         index_body += '<h2>Articles</h2>\n' + \
-            create_html_link_list_from_dict(articles_info)
+            create_html_link_list_from_dict(articles_info_sorted)
 
     index_html = template_j2.render(
         title=index_title,
