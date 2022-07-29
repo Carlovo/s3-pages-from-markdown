@@ -182,6 +182,22 @@ for dirpath, dirnames, filenames in os.walk(source_topic_dir + '/articles'):
         index_body += '<h2>Articles</h2>\n' + \
             create_html_link_list_from_dict(articles_info_sorted)
 
+    if os.path.exists(os.path.join(dirpath, 'index.md')):
+        with open(os.path.join(dirpath, 'index.md'), 'r', encoding='utf-8') as input_file:
+            text = input_file.read()
+
+        body = md.convert(text)
+        index_raw = template_j2.render(body=body)
+        root = xml.etree.ElementTree.fromstring(index_raw)
+
+        xml_body = root.find('body')
+        xml_h1 = xml_body.find('h1')
+        xml_body.remove(xml_h1)
+
+        for child in xml_body:
+            index_body += xml.etree.ElementTree.tostring(
+                child, encoding='unicode', method='xml')
+
     index_html = template_j2.render(
         title=index_title,
         body=index_body
