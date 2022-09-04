@@ -3,7 +3,7 @@ import jinja2
 import os
 import shutil
 import markdown
-import xml
+import xml.etree.ElementTree as ET
 
 topic = sys.argv[1]
 bucket = sys.argv[2]
@@ -82,7 +82,7 @@ def try_extract_index_title_else_create(dirpath: str) -> str:
 
         body = md.convert(text)
         index_raw = template_j2.render(body=body)
-        root = xml.etree.ElementTree.fromstring(index_raw)
+        root = ET.fromstring(index_raw)
 
         return root.find('body/h1').text
     else:
@@ -136,7 +136,7 @@ for dirpath, dirnames, filenames in os.walk(source_topic_dir + '/articles'):
 
         body = md.convert(text) + footer_html
         html_raw = template_j2.render(body=body)
-        root = xml.etree.ElementTree.fromstring(html_raw)
+        root = ET.fromstring(html_raw)
 
         article_title = root.find('body/h1').text
 
@@ -188,14 +188,14 @@ for dirpath, dirnames, filenames in os.walk(source_topic_dir + '/articles'):
 
         body = md.convert(text)
         index_raw = template_j2.render(body=body)
-        root = xml.etree.ElementTree.fromstring(index_raw)
+        root = ET.fromstring(index_raw)
 
         xml_body = root.find('body')
         xml_h1 = xml_body.find('h1')
         xml_body.remove(xml_h1)
 
         for child in xml_body:
-            index_body += xml.etree.ElementTree.tostring(
+            index_body += ET.tostring(
                 child, encoding='unicode', method='xml')
 
     index_html = template_j2.render(
