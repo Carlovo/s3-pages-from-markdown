@@ -40,7 +40,6 @@ else:
     footer_html = ''
 
 if os.path.isfile(js_app_file):
-    shutil.copyfile(js_app_file, article_html_dir + '/main.js')
     js_ref = f'<script type="module" src="./main.js"></script>'
 else:
     js_ref = ''
@@ -205,3 +204,6 @@ for dirpath, dirnames, filenames in os.walk(source_topic_dir + '/articles'):
 
     with open(os.path.join(article_html_subdir, '..', online_dirs[-1] + '.html'), 'x', encoding='utf-8') as output_file:
         output_file.write(index_html)
+
+if os.path.isfile(js_app_file):
+    shutil.copyfile(js_app_file, article_html_dir + '/main.js')
