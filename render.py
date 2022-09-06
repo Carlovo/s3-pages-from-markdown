@@ -112,7 +112,7 @@ for dirpath, dirnames, filenames in os.walk(source_topic_dir + '/articles'):
     breadcrumbs_info[online_path] = index_title
 
     breadcrumb_dir_links = [
-        create_html_link(os.path.join('/', *online_dirs[:_i + 1], 'index.html'),
+        create_html_link(os.path.join('/', *online_dirs[:_i + 1]) + '.html',
                          breadcrumbs_info[os.path.join('/', *online_dirs[:_i + 1])])
         for _i, _ in enumerate(online_dirs)
     ]
@@ -152,7 +152,7 @@ for dirpath, dirnames, filenames in os.walk(source_topic_dir + '/articles'):
 
         html_filename = name + '.html'
 
-        with open(os.path.join(article_html_subdir, html_filename), 'w', encoding='utf-8', errors='xmlcharrefreplace') as output_file:
+        with open(os.path.join(article_html_subdir, html_filename), 'x', encoding='utf-8', errors='xmlcharrefreplace') as output_file:
             output_file.write(html_pretty)
 
         articles_info[
@@ -166,7 +166,7 @@ for dirpath, dirnames, filenames in os.walk(source_topic_dir + '/articles'):
 
     if dirnames:
         dirnames_info = {
-            os.path.join(online_path, dirname, 'index.html'):
+            os.path.join(online_path, dirname + '.html'):
             try_extract_index_title_else_create(os.path.join(dirpath, dirname))
             for dirname in dirnames
         }
@@ -203,5 +203,5 @@ for dirpath, dirnames, filenames in os.walk(source_topic_dir + '/articles'):
         body=index_body
     )
 
-    with open(os.path.join(article_html_subdir, 'index.html'), 'w', encoding='utf-8') as output_file:
+    with open(os.path.join(article_html_subdir, '..', online_dirs[-1] + '.html'), 'x', encoding='utf-8') as output_file:
         output_file.write(index_html)

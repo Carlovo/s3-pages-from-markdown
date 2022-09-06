@@ -20,6 +20,6 @@ module "webpages" {
   source = "./tf_modules/s3_webpage"
 
   bucket_name   = var.bucket
-  resource_name = each.key
+  resource_name = substr(each.key, -5, -1) == ".html" ? substr(each.key, 0, length(each.key) -5) : each.key
   content_path  = "${local.selected_content_path}${each.key}"
 }
